@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Priority Scheduling - OS Simulation</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style/main.css">
+</head>
+
+<body>
+  <div id="progressBar"></div>
+  <header>
+    <h1>Priority Scheduling</h1>
+    <nav>
+      <a href="#overview">Overview</a>
+      <a href="#features">Features</a>
+      <a href="#advantages">Advantages</a>
+      <a href="#disadvantages">Disadvantages</a>
+      <a href="simulation.html">Simulation</a>
+    </nav>
+  </header>
+
+  <div class="hero">
+    <h2>Welcome to the Priority Scheduling Simulator</h2>
+    <p>Learn how operating systems schedule tasks based on priority. Explore its behavior, strengths, and weaknesses
+      using an interactive simulator.</p>
+    <a class="btn" href="simulation.html">Start Simulation</a>
+  </div>
+
+  <section id="overview" class="reveal">
+    <h3>What is Priority Scheduling?</h3>
+    <p>
+      Priority Scheduling is a fundamental scheduling algorithm used in modern operating systems. Each process is
+      assigned a priority level, and the CPU is always allocated to the process with the highest priority. In the case
+      of equal priorities, processes are scheduled based on their arrival time.<br><br>
+      This algorithm plays a critical role in time-sensitive systems and can be either <strong>preemptive</strong> or
+      <strong>non-preemptive</strong>. It ensures that urgent tasks receive immediate attention, improving system
+      responsiveness and resource allocation.
+    </p>
+  </section>
+
+  <section id="features" class="reveal">
+    <h3>Key Features</h3>
+    <ul>
+      <li>Non-preemptive or preemptive mode</li>
+      <li>Processes assigned a priority level</li>
+      <li>Efficient for short and urgent tasks</li>
+      <li>Simple to implement</li>
+    </ul>
+  </section>
+
+  <section id="advantages" class="reveal">
+    <h3>Advantages</h3>
+    <ul>
+      <li>Improves response time for high-priority tasks</li>
+      <li>Helps in achieving real-time scheduling</li>
+      <li>Flexible and tunable using different priority metrics</li>
+    </ul>
+  </section>
+
+  <section id="disadvantages" class="reveal">
+    <h3>Disadvantages</h3>
+    <ul>
+      <li>Low-priority processes may starve if high-priority ones keep arriving</li>
+      <li>Difficult to assign accurate priorities</li>
+      <li>Not fair in terms of waiting time</li>
+    </ul>
+  </section>
+
+  <section id="application" class="reveal">
+    <h3>Real-World Applications</h3>
+    <ul>
+      <li>Multimedia systems where video/audio decoding needs higher priority</li>
+      <li>Embedded systems requiring real-time responsiveness</li>
+      <li>Banking and financial services for transaction processing</li>
+    </ul>
+  </section>
+
+  <section id="improvement" class="reveal">
+    <h3>Improving Priority Scheduling</h3>
+    <ul>
+      <li>Aging technique to reduce starvation of low-priority processes</li>
+      <li>Dynamic priority adjustment based on resource usage</li>
+    </ul>
+  </section>
+
+  <div style="text-align: center; margin-bottom: 3rem;">
+    <a class="btn" href="simulation.html">Start Simulation</a>
+  </div>
+
+  <footer>
+    &copy; 2025 Priority Scheduling Simulator. Created for educational purposes.
+  </footer>
+
+  <script>
+    window.onscroll = function () {
+      const winScroll = document.documentElement.scrollTop || document.body.scrollTop;
+      const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+      const scrolled = (winScroll / height) * 100;
+      document.getElementById("progressBar").style.width = scrolled + "%";
+    };
+
+    function revealOnScroll() {
+      const reveals = document.querySelectorAll(".reveal");
+      for (let i = 0; i < reveals.length; i++) {
+        const windowHeight = window.innerHeight;
+        const revealTop = reveals[i].getBoundingClientRect().top;
+        const revealPoint = 100;
+
+        if (revealTop < windowHeight - revealPoint) {
+          reveals[i].classList.add("active");
+        }
+      }
+    }
+
+    window.addEventListener("scroll", revealOnScroll);
+    window.addEventListener("load", revealOnScroll); // Show visible elements on load
+  </script>
+</body>
+
+</html>

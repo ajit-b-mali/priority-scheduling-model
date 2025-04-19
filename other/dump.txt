@@ -1,0 +1,245 @@
+// priority scheduling
+import Process from "./Process.js";
+import CPUScheduler from "./CPUScheduler.js";
+
+export default class OperatingSystem {
+    constructor() {
+        this.newQueue = [
+            new Process(0, 4, 2),
+            new Process(1, 3, 1),
+            new Process(2, 2, 3),
+            new Process(3, 3, 1),
+            new Process(4, 5, 4),
+        ];
+        this.readyQueue = new CPUScheduler();
+        this.terminateQueue = [];
+
+        this.timer = 0;
+        this.currentTime = 0;
+        this.i = 0;
+        /**
+         * @type {Process | null}
+         */
+        this.currentProcess = null;
+    }
+
+    handleNewQueue() {
+        while (this.i < this.newQueue.length && this.newQueue[this.i].arrivalTime === this.currentTime) {
+            this.readyQueue.push(this.newQueue[this.i]);
+            this.i++;
+        }
+    }
+
+    dispatcher() {
+        // Preempt if needed
+        if (this.currentProcess && !this.readyQueue.isEmpty()) {
+            const top = /** @type {Process} */this.readyQueue.top();
+            if (top.priority < this.currentProcess.priority) {
+                this.readyQueue.push(this.currentProcess);
+                this.currentProcess = this.readyQueue.top();
+                this.readyQueue.pop();
+            }
+        }
+
+        // Assign process if idle
+        if (!this.currentProcess && !this.readyQueue.isEmpty()) {
+            this.currentProcess = this.readyQueue.top();
+            this.readyQueue.pop();
+        }
+    }
+
+    update(deltaTime) {
+        this.handleNewQueue();
+        this.dispatcher();
+
+        // Run current process for 1 unit
+        if (this.currentProcess) {
+            this.currentProcess.remainingTime--;
+            if (this.currentProcess.remainingTime === 0) {
+                this.currentProcess.completionTime = this.currentTime + 1;
+                this.terminateQueue.push(this.currentProcess);
+                this.currentProcess = null;
+            }
+        }
+
+        if (this.terminateQueue.length == this.newQueue.length)
+            this.printSummary();
+
+        this.timer += deltaTime;
+        this.currentTime = Math.floor(this.timer);
+    }
+
+    printSummary() {
+        this.terminateQueue.sort((a, b) => a.id.localeCompare(b.id));
+
+        console.log("ID\tAT\tBT\tP\tCT\tTAT\tWT");
+        this.terminateQueue.forEach(p => {
+            console.log(`${p.id}\t${p.arrivalTime}\t${p.burstTime}\t${p.priority}\t${p.completionTime}\t${p.turnaroundTime}\t${p.waitTime}`);
+        });
+    }
+}
+
+export default class Process {
+    static #index = 1;
+    
+    /**
+     * @param {number} at 
+     * @param {number} bt 
+     * @param {number} priority 
+     */
+    constructor(at, bt, priority) {
+        this.id = "P" + Process.#index++;
+        this.arrivalTime = at;
+        this.burstTime = bt;
+        this.remainingTime = bt;
+        this.priority = priority;
+        this.completionTime = 0;
+
+        this.color = `hsl(${Math.floor(Math.random() * 256)}, 100%, 50%)`
+        this.x = 0;
+        this.y = 0;
+        this.w = 40;
+        this.h = 40;
+    }
+
+    /**
+     * @param {CanvasRenderingContext2D} ctx
+     */
+    draw(ctx) {
+        ctx.fillStyle = this.color;
+        ctx.fillRect(this.x + 1, this.y + 1, this.w - 2, this.h - 2);
+        ctx.fillStyle = "black";
+    }
+
+    get turnaroundTime() {
+        return this.completionTime - this.arrivalTime;
+    }
+
+    get waitTime() {
+        return this.turnaroundTime - this.burstTime;
+    }
+}
+
+//////////////////////////////////////////////
+
+<!--
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Priority Scheduling Simulation</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    main {
+      display: flex;
+      flex-direction: column;
+      height: 100svh;
+    }
+    
+    * {
+      background-color: rgba(255, 00, 0, 0.1);
+      border: 1px solid red;
+    }
+
+    .top {
+      display: flex;
+      height: 80%;
+    }
+
+    .simulation {
+      width: 70%;
+    }
+
+    .summary-table {
+      width: 30%;
+    }
+
+    .gantt-chart {
+      height: 20%;
+    }
+
+    canvas {
+      border: 1px solid #ccc;
+      background: transparent;
+    }
+
+    .controls {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
+    button {
+      padding: 0.5rem 1rem;
+      font-size: 1rem;
+      background: #4f46e5;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #4338ca;
+    }
+
+    table {
+      border-collapse: collapse;
+      width: 50%;
+      margin-top: 1rem;
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 0.5rem;
+      text-align: center;
+    }
+    th {
+      background-color: #e0e7ff;
+    }
+  </style>
+</head>
+<body>
+  <div class="add-process"></div>
+  <main>
+    <div class="top">
+      <div class="simulation">
+        <canvas id="sim-canvas"></canvas>
+        <div class="controls">
+          <button id="startBtn">Start</button>
+          <button id="pauseBtn">Pause</button>
+          <button id="stepBtn">Step</button>
+          <button id="resetBtn">Reset</button>
+        </div>
+      </div>
+      <div class="summary-table">
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>AT</th>
+              <th>BT</th>
+              <th>CT</th>
+              <th>TAT</th>
+              <th>WT</th>
+            </tr>
+          </thead>
+          <tbody id="summaryTable">
+            
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="gantt-chart">
+      <canvas id="gantt-canvas"></canvas>
+    </div>
+  </main>
+  <script type="module" src="src/main.js"></script>
+</body>
+</html> -->
+
+//////////////////////////////////////

@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="style/main.css">
+  <title>Process Simulator</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body, html {
+      width: 100vw;
+      height: 100vh;
+      font-family: 'Segoe UI', sans-serif;
+    }
+
+    .container {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      grid-template-rows: 100px auto min-content 60px;
+      height: 100vh;
+      grid-template-areas:
+        "menu menu"
+        "simulation summary"
+        "controls summary"
+        "gantt gantt";
+    }
+
+    header {
+      grid-area: menu;
+    }
+
+    .simulation {
+      grid-area: simulation;
+      background: #f4f4f4;
+      padding: 10px;
+    }
+
+    .controls {
+      grid-area: controls;
+      background: #ddd;
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      padding: 10px;
+    }
+
+    .summary-table {
+      grid-area: summary;
+      background: #fff;
+      overflow: auto;
+      padding: 10px;
+    }
+
+    .gantt-chart {
+      grid-area: gantt;
+      background: #eee;
+      padding: 10px;
+    }
+
+    button {
+      padding: 8px 16px;
+      border: none;
+      background: #007bff;
+      color: white;
+      cursor: pointer;
+      border-radius: 4px;
+    }
+
+    button:hover {
+      background: #0056b3;
+    }
+
+    .modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      height: 100vh;
+      width: 100vw;
+      background: rgba(0, 0, 0, 0.5);
+      display: none;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .modal-content {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      width: 300px;
+    }
+
+    .modal.show {
+      display: flex;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Priority Scheduling</h1>
+      <nav>
+        <a href="#overview">Overview</a>
+        <a href="#features">Features</a>
+        <a href="#advantages">Advantages</a>
+        <a href="#disadvantages">Disadvantages</a>
+        <a href="simulation.html">Simulation</a>
+      </nav>
+    </header>
+    <div class="simulation">
+      <!-- Simulation display -->
+      <h2>Simulation Running...</h2>
+    </div>
+
+    <div class="controls">
+      <button onclick="showModal()">Add</button>
+      <button>Pause</button>
+      <button>Play</button>
+      <button>Clear</button>
+    </div>
+
+    <div class="summary-table">
+      <h3>Process Summary</h3>
+      <!-- Table -->
+      <!-- Add your table here -->
+    </div>
+
+    <div class="gantt-chart">
+      <h3>Gantt Chart</h3>
+      <!-- Gantt Chart goes here -->
+    </div>
+  </div>
+
+  <!-- Modal -->
+  <div class="modal" id="processModal">
+    <div class="modal-content">
+      <h3>Add Process</h3>
+      <form onsubmit="hideModal(); return false;">
+        <label>PID: <input type="text" required></label><br><br>
+        <label>AT: <input type="text" required></label><br><br>
+        <label>BT: <input type="text" required></label><br><br>
+        <button type="submit">Add</button>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    function showModal() {
+      document.getElementById('processModal').classList.add('show');
+    }
+
+    function hideModal() {
+      document.getElementById('processModal').classList.remove('show');
+    }
+  </script>
+</body>
+</html>
