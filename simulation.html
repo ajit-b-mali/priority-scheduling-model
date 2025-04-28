@@ -68,11 +68,14 @@
     <div class="modal-content">
       <h3>Add Process</h3>
       <form id="add-process-form">
-        <label>Arrival Time: <input type="text" name="at"></label><br><br>
-        <label>Burst Time: <input type="text" name="bt"></label><br><br>
-        <label>Priority: <input type="text" name="priority"></label><br><br>
-        <button type="submit">Add</button>
-      </form>
+        <label>Arrival Time: <input type="text" name="at"></label>
+        <label>Burst Time: <input type="text" name="bt"></label>
+        <label>Priority: <input type="text" name="priority"></label>
+        <div class="modal-controls">
+          <button type="submit">Add</button>
+          <button type="button" id="close-modal">Done</button>
+        </form>
+        </div>
     </div>
   </div>
   <script type="module" src="src/main.js"></script>

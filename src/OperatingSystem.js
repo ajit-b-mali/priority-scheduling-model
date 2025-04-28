@@ -4,11 +4,11 @@ import CPUScheduler from "./CPUScheduler.js";
 export default class OperatingSystem {
     constructor() {
         this.newQueue = [
-            Process.add(0, 4, 2),
-            Process.add(1, 3, 1),
-            Process.add(2, 2, 3),
-            Process.add(3, 3, 2),
-            Process.add(4, 5, 1),
+            Process.add(0, 3, 3),
+            Process.add(1, 4, 2),
+            Process.add(2, 6, 4),
+            Process.add(3, 6, 4),
+            Process.add(5, 2, 10),
         ];
         this.readyQueue = new CPUScheduler();
         this.terminateQueue = [];
@@ -33,9 +33,20 @@ export default class OperatingSystem {
 
     // Assign process if idle
     dispatcher() {
-        if (!this.currentProcess && !this.readyQueue.isEmpty()) {
+        if (this.readyQueue.isEmpty()) {
+            return;
+        }
+
+        if (this.currentProcess == "") {
             this.currentProcess = this.readyQueue.top();
             this.readyQueue.pop();
+        } else {
+            const currentProcess = Process.get(this.currentProcess);
+            const nextProcess = Process.get(this.readyQueue.top());
+            if (nextProcess.priority < currentProcess.priority) {
+                this.currentProcess = this.readyQueue.top();
+                this.readyQueue.pop();
+            }
         }
     }
 

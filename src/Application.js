@@ -25,6 +25,9 @@ export default class Application {
         document.getElementById("slow-simulation")?.addEventListener("click", _ => this.state = "slow");
         document.getElementById("add-process-form")?.addEventListener("submit", this.addProcess.bind(this));
         document.getElementById("clear-processes")?.addEventListener("click", this.clearProcesses.bind(this));
+        document.getElementById("close-modal")?.addEventListener("click", _ => {
+            document.getElementById('processModal')?.classList.remove('show');
+        });
     }
 
     clearProcesses() {
@@ -46,8 +49,6 @@ export default class Application {
 
         const newProcess = Process.add(at, bt, priority);
         this.os.newQueue.push(newProcess);
-
-        document.getElementById('processModal')?.classList.remove('show');
     }
 
     drawCPU(x, y) {
@@ -194,22 +195,22 @@ export default class Application {
     
     update(deltaTime) {
         Process.collection.forEach(p => p.update(deltaTime));
+        this.updateSummaryTable();
         
         if (this.os.terminateQueue.length == Process.collection.size)
             this.state = "pause";
 
         if (this.state == "fast") {
-            this.os.update(deltaTime * 2);
+            this.os.update(deltaTime * 4);
         }
         if (this.state == "slow") {
-            this.os.update(deltaTime / 2);
+            this.os.update(deltaTime / 3);
         }
         if (this.state == "pause") {
             return;
         }
         if (this.state == "play")
         {
-            this.updateSummaryTable();
             this.os.update(deltaTime);
         }
 
