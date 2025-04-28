@@ -12,116 +12,45 @@ export default class Application {
         this.ctx.font = "24px courier bold";
 
         this.os = new OperatingSystem();
-
-        this.state = "pause";
-        this.canvas.addEventListener("click", () => {
-            if (this.state == "pause")
-                this.state = "play";
-            else
-                this.state = "pause";
+        window.addEventListener("resize", () => {
+            this.canvas.width = this.canvas.clientWidth;
+            this.canvas.height = this.canvas.clientHeight;
         });
+        this.canvas.width = this.canvas.clientWidth;
+        this.canvas.height = this.canvas.clientHeight;
 
-        document.getElementById("get-summary")?.addEventListener("click", (event) => {
-            this.os.printSummary();
-        });
+        document.getElementById("play-simulation")?.addEventListener("click", _ => this.state = "play");
+        document.getElementById("pause-simulation")?.addEventListener("click", _ => this.state = "pause");
+        document.getElementById("fast-simulation")?.addEventListener("click", _ => this.state = "fast");
+        document.getElementById("slow-simulation")?.addEventListener("click", _ => this.state = "slow");
+        document.getElementById("add-process-form")?.addEventListener("submit", this.addProcess.bind(this));
+        document.getElementById("clear-processes")?.addEventListener("click", this.clearProcesses.bind(this));
     }
 
-    update(deltaTime) {
-        if (this.state == "play")
-            this.os.update(deltaTime);
-
-        Process.collection.forEach(p => p.update(deltaTime));
+    clearProcesses() {
+        this.os.newQueue.length = 0;
+        this.os.readyQueue.clear();
+        this.os.terminateQueue.length = 0;
+        Process.collection.clear();
+        this.os.currentProcess = "";
     }
 
-    drawNewQueue() {
-        let x = 50;
-        let y = 80;
-        let padding = 5;
-        
-        // draw title
-        this.ctx.fillStyle = "black";
-        this.ctx.textAlign = "center";
-        this.ctx.textBaseline = "bottom";
-        this.ctx.fillText("new queue", x + (Process.collection.size * Process.w) / 2, y - padding);
+    addProcess(event) {
+        const addProcessForm = /** @type {HTMLFormElement} */ (document.getElementById('add-process-form'));
+        if (!addProcessForm) return;
+        event.preventDefault();
+        const formData = new FormData(addProcessForm);
+        const at = formData.get('at');
+        const bt = formData.get('bt');
+        const priority = formData.get('priority');
 
-        // draw border
-        this.ctx.beginPath(); 
-        this.ctx.moveTo(x - padding * 2, y - padding);
-        this.ctx.lineTo(x + Process.collection.size * Process.w + padding * 2, y - padding);
-        this.ctx.moveTo(x - padding * 2, y + Process.h + padding);
-        this.ctx.lineTo(x + Process.collection.size * Process.w + padding * 2, y + Process.h + padding);
-        this.ctx.closePath();
-        this.ctx.stroke();
+        const newProcess = Process.add(at, bt, priority);
+        this.os.newQueue.push(newProcess);
+
+        document.getElementById('processModal')?.classList.remove('show');
     }
 
-    drawProcess() {
-        let x = 50;
-        let y = 80;
-        let i = 1;
-        for (const pid of this.os.newQueue) {
-            const p = Process.get(pid);
-            p.targetX = x + (Process.collection.size - i) * Process.w;
-            p.targetY = y;
-            p.draw(this.ctx);
-            i++;
-        }
-
-        y = 180;
-        i = 1;
-        for (const pid of this.os.readyQueue.data()) {
-            const p = Process.get(pid);
-            p.targetX = x + (Process.collection.size - i) * Process.w;
-            p.targetY = y;
-            p.draw(this.ctx);
-            i++;
-        }
-
-        y = 280
-        i = 1;
-        for (const pid of this.os.terminateQueue) {
-            const p = Process.get(pid);
-            p.targetX = x + (Process.collection.size - i) * Process.w;
-            p.targetY = y;
-            p.draw(this.ctx);
-            i++;
-        }
-        
-        x = 550;
-        y = 50;
-        let padding = 10;
-        if (this.os.currentProcess) {
-            const p = Process.get(this.os.currentProcess);
-            p.targetX = x + padding / 2;
-            p.targetY = y + padding / 2;
-        }
-
-        Process.collection.forEach(p => p.draw(this.ctx));
-    }
-
-    drawReadyQueue() {
-        let x = 50;
-        let y = 180;
-        let padding = 5;
-        
-        // draw title
-        this.ctx.fillStyle = "black";
-        this.ctx.textAlign = "center";
-        this.ctx.textBaseline = "bottom";
-        this.ctx.fillText("ready queue", x + (Process.collection.size * Process.w) / 2, y - padding);
-
-        // draw border
-        this.ctx.beginPath();
-        this.ctx.moveTo(x - padding * 2, y - padding);
-        this.ctx.lineTo(x + Process.collection.size * Process.w + padding * 2, y - padding);
-        this.ctx.moveTo(x - padding * 2, y + Process.h + padding);
-        this.ctx.lineTo(x + Process.collection.size * Process.w + padding * 2, y + Process.h + padding);
-        this.ctx.closePath();
-        this.ctx.stroke();
-    }
-
-    drawCPU() {
-        let x = 550;
-        let y = 50;
+    drawCPU(x, y) {
         let padding = 10;
         this.ctx.fillStyle = "black";
 
@@ -135,20 +64,29 @@ export default class Application {
         this.ctx.fillRect(x + padding / 2, y - 1, Process.w, Process.h + padding + 2);
 
         this.ctx.fillStyle = "black";
+
+        if (this.os.currentProcess) {
+            const p = Process.get(this.os.currentProcess);
+            p.targetX = x + padding / 2;
+            p.targetY = y + padding / 2;
+        }
     }
 
-    drawTerminateQueue() {
-        let x = 50;
-        let y = 280;
-        let padding = 5;
+    drawTime(x, y) {
+        let padding = 10;
+        this.ctx.textAlign = "center";
+        this.ctx.textBaseline = "top";
+        this.ctx.fillText(String(Math.floor(this.os.timer)), x, y + padding);
+    }
 
-        // draw title
+    drawQueue(title, x, y) {
+        const padding = 5;
+        this.ctx.font = "16px Arial";
         this.ctx.fillStyle = "black";
         this.ctx.textAlign = "center";
         this.ctx.textBaseline = "bottom";
-        this.ctx.fillText("terminate queue", x + (Process.collection.size * Process.w) / 2, y - padding);
-
-        // draw border
+        this.ctx.fillText(title, x + (Process.collection.size * Process.w) / 2, y - padding);
+    
         this.ctx.beginPath();
         this.ctx.moveTo(x - padding * 2, y - padding);
         this.ctx.lineTo(x + Process.collection.size * Process.w + padding * 2, y - padding);
@@ -158,66 +96,141 @@ export default class Application {
         this.ctx.stroke();
     }
 
-    drawTime() {
-        let x = this.canvas.width / 2;
-        let y = 0;
-        let padding = 10;
-
-        this.ctx.textAlign = "center";
-        this.ctx.textBaseline = "top";
-        this.ctx.fillText(String(Math.floor(this.os.timer)), x, y + padding);
-    }
-
-    drawGanttChart() {
-        let x = 0;
-        let y = 400;
-        let padding = 5;
-
-        // draw title
-        this.ctx.fillStyle = "black";
-        this.ctx.textAlign = "center";
-        this.ctx.textBaseline = "bottom";
-        this.ctx.fillText("Gantt Chartt", this.canvas.width / 2, y - padding);
-
-        // draw border
-        this.ctx.beginPath();
-        this.ctx.moveTo(x - padding * 2, y - padding);
-        this.ctx.lineTo(x + this.os.ganttChart.length * Process.w + padding * 2, y - padding);
-        this.ctx.moveTo(x - padding * 2, y + Process.h + padding);
-        this.ctx.lineTo(x + this.os.ganttChart.length * Process.w + padding * 2, y + Process.h + padding);
-        this.ctx.closePath();
-        this.ctx.stroke();
-
+    drawProcessQueue(queue, x, y) {
         let i = 1;
-        for (const pid of this.os.ganttChart) {
+        for (const pid of queue) {
             const p = Process.get(pid);
-            let px = x + (this.os.ganttChart.length - i) * Process.w;
-            let py = y;
-            this.ctx.fillStyle = p.color;
-            this.ctx.fillRect(px + 1, py + 1, Process.w - 2, Process.h - 2);
-    
-            this.ctx.fillStyle = "black";
-            this.ctx.font = "24px courier bold";
-            this.ctx.textAlign = "center";
-            this.ctx.textBaseline = "middle";
-            this.ctx.fillText(p.id, px + Process.w / 2, py + Process.h / 2);
-
+            p.targetX = x + (Process.collection.size - i) * Process.w;
+            p.targetY = y;
+            p.draw(this.ctx);
             i++;
         }
-        this.ctx.fillStyle = "black";
+    }
+
+    updateSummaryTable() {
+        const table = /** @type {HTMLTableElement | null} */ (document.querySelector('.summary-table table'));
+        if (!table) return;
+
+        // Clear existing rows except the header
+        const rows = table.querySelectorAll('tr:not(:first-child)');
+        rows.forEach(row => row.remove());
+
+        // Populate table with process data
+        for (const process of Process.collection.values()) {
+            const row = table.insertRow();
+            row.insertCell().textContent = process.id;
+            row.insertCell().textContent = process.arrivalTime;
+            row.insertCell().textContent = process.burstTime;
+            row.insertCell().textContent = process.priority;
+            row.insertCell().textContent = process.completionTime;
+            row.insertCell().textContent = process.waitTime;
+            row.insertCell().textContent = process.turnaroundTime;
+        }
+    }
+
+    drawGanttChart(ganttChart, currentProcess, timer) {
+        const canvas = /** @type {HTMLCanvasElement} */ (document.getElementById("gantt-canvas"));
+        canvas.width = this.canvas.clientWidth;
+        canvas.height = 100;
+        canvas.style.border = "1px solid black";
+        if (!canvas) throw new Error("Gantt chart canvas not found");
+        const ctx = canvas.getContext("2d");
+        if (!ctx) throw new Error("Browser doesn't support 2d rendering canvas");
+        ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+    
+        const boxHeight = 50;
+        const startX = 10;
+        const startY = 10;
+        const boxWidth = 40; // Width for fully completed 1 time unit (for finished processes)
+        
+        let x = startX;
+        
+        // Draw finished processes
+        ganttChart.forEach(pid => {
+            const p = Process.get(pid);
+    
+            const color = p ? p.color : "gray";
+            ctx.fillStyle = color;
+            ctx.fillRect(x, startY, boxWidth, boxHeight);
+    
+            ctx.strokeStyle = "black";
+            ctx.strokeRect(x, startY, boxWidth, boxHeight);
+    
+            ctx.fillStyle = "black";
+            ctx.font = "16px Arial";
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            ctx.fillText(pid, x + boxWidth / 2, startY + boxHeight / 2);
+    
+            x += boxWidth;
+        });
+    
+        // Draw currently executing process (smooth progress)
+        if (currentProcess !== "") {
+            const p = Process.get(currentProcess);
+            if (p) {
+                const elapsed = p.burstTime - p.remainingTime;
+                const progress = elapsed / p.burstTime; // 0.0 to 1.0
+                const progressWidth = progress * boxWidth;
+    
+                ctx.fillStyle = p.color;
+                ctx.fillRect(x, startY, progressWidth, boxHeight);
+    
+                ctx.strokeStyle = "black";
+                ctx.strokeRect(x, startY, boxWidth, boxHeight);
+    
+                ctx.fillStyle = "black";
+                ctx.font = "16px Arial";
+                ctx.textAlign = "center";
+                ctx.textBaseline = "middle";
+                ctx.fillText(currentProcess, x + boxWidth / 2, startY + boxHeight / 2);
+            }
+        }
+    }
+    
+    clear() {
+        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+    }
+    
+    update(deltaTime) {
+        Process.collection.forEach(p => p.update(deltaTime));
+        
+        if (this.os.terminateQueue.length == Process.collection.size)
+            this.state = "pause";
+
+        if (this.state == "fast") {
+            this.os.update(deltaTime * 2);
+        }
+        if (this.state == "slow") {
+            this.os.update(deltaTime / 2);
+        }
+        if (this.state == "pause") {
+            return;
+        }
+        if (this.state == "play")
+        {
+            this.updateSummaryTable();
+            this.os.update(deltaTime);
+        }
+
     }
 
     draw() {
-        this.drawTime();
-        this.drawNewQueue();
-        this.drawReadyQueue();
-        this.drawCPU();
-        this.drawTerminateQueue();
-        this.drawProcess();
-        this.drawGanttChart();
-    }
+        this.drawTime(this.canvas.width / 2, 0);
+        
+        this.drawQueue("new queue", 50, 80);
+        this.drawProcessQueue(this.os.newQueue, 50, 80);
+        
+        this.drawQueue("ready queue", 50, 180);
+        this.drawProcessQueue(this.os.readyQueue.data(), 50, 180);
+        
+        this.drawQueue("terminate queue", 50, 280);
+        this.drawProcessQueue(this.os.terminateQueue, 50, 280);
+        
+        this.drawCPU(550, 50);
 
-    clear() {
-        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        this.drawGanttChart(this.os.ganttChart, this.os.currentProcess, this.os.timer);
+
+        Process.collection.forEach(p => p.draw(this.ctx));
     }
 }

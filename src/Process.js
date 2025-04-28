@@ -4,8 +4,8 @@ export default class Process {
     static h = 40;
     static collection = new Map();
 
-    static add(at, bt) {
-        const p = new Process(at, bt);
+    static add(at, bt, priority) {
+        const p = new Process(at, bt, priority);
         Process.collection.set(p.id, p);
         return p.id;
     }
@@ -21,11 +21,13 @@ export default class Process {
     /**
      * @param {number} at 
      * @param {number} bt 
+     * @param {number} priority
      */
-    constructor(at, bt) {
+    constructor(at, bt, priority) {
         this.id = "P" + Process.#index++;
         this.arrivalTime = at;
         this.burstTime = bt;
+        this.priority = priority;
         this.remainingTime = bt;
         this.completionTime = 0;
 
@@ -71,10 +73,14 @@ export default class Process {
     }
 
     get turnaroundTime() {
-        return this.completionTime - this.arrivalTime;
+        let result = this.completionTime - this.arrivalTime;
+        if (result < 0) result = 0;
+        return result;
     }
 
     get waitTime() {
-        return this.turnaroundTime - this.burstTime;
+        let result = this.turnaroundTime - this.burstTime;
+        if (result < 0) result = 0;
+        return result;
     }
 }

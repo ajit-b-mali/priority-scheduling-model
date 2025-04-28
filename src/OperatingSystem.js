@@ -4,17 +4,17 @@ import CPUScheduler from "./CPUScheduler.js";
 export default class OperatingSystem {
     constructor() {
         this.newQueue = [
-            Process.add(0, 4),
-            Process.add(1, 3),
-            Process.add(2, 2),
-            Process.add(3, 3),
-            Process.add(4, 5),
+            Process.add(0, 4, 2),
+            Process.add(1, 3, 1),
+            Process.add(2, 2, 3),
+            Process.add(3, 3, 2),
+            Process.add(4, 5, 1),
         ];
         this.readyQueue = new CPUScheduler();
         this.terminateQueue = [];
 
         this.ganttChart = [];
-        this.lastTime = -1;
+        this.lastTime = 0;
         this.timer = 0;
         this.currentProcess = "";
     }
@@ -57,7 +57,7 @@ export default class OperatingSystem {
             this.lastTime = Math.floor(this.timer);
 
             if (this.currentProcess == "") {
-                const p = new Process(0, 0);
+                const p = new Process(0, 0, 0);
                 p.color = "gray";
                 this.ganttChart.push(p.id);
             }
@@ -73,15 +73,5 @@ export default class OperatingSystem {
         this.dispatcher();
 
         this.handleGanttChart();
-    }
-
-    printSummary() {
-        this.terminateQueue.sort((a, b) => a.localeCompare(b));
-
-        console.log("ID\tAT\tBT\tCT\tTAT\tWT");
-        this.terminateQueue.forEach(pid => {
-            const p = Process.get(pid);
-            console.log(`${p.id}\t${p.arrivalTime}\t${p.burstTime}\t${p.completionTime}\t${p.turnaroundTime}\t${p.waitTime}`);
-        });
     }
 }

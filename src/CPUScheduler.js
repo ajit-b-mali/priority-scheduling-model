@@ -107,4 +107,8 @@ export default class CPUScheduler {
     data() {
         return this.readyQueue;
     }
+
+    clear() {
+        this.readyQueue.length = 0;
+    }
 }
