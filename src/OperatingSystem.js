@@ -44,6 +44,7 @@ export default class OperatingSystem {
             const currentProcess = Process.get(this.currentProcess);
             const nextProcess = Process.get(this.readyQueue.top());
             if (nextProcess.priority < currentProcess.priority) {
+                this.readyQueue.push(this.currentProcess);
                 this.currentProcess = this.readyQueue.top();
                 this.readyQueue.pop();
             }

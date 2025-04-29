@@ -82,17 +82,23 @@ export default class Application {
 
     drawQueue(title, x, y) {
         const padding = 5;
+
+        let width = Process.collection.size * Process.w;
+        if (width <= Process.w * 3)
+            width = Process.w * 3;
+        
         this.ctx.font = "16px Arial";
         this.ctx.fillStyle = "black";
         this.ctx.textAlign = "center";
         this.ctx.textBaseline = "bottom";
-        this.ctx.fillText(title, x + (Process.collection.size * Process.w) / 2, y - padding);
-    
+        this.ctx.fillText(title, x + width / 2, y - padding);
+        
+
         this.ctx.beginPath();
         this.ctx.moveTo(x - padding * 2, y - padding);
-        this.ctx.lineTo(x + Process.collection.size * Process.w + padding * 2, y - padding);
+        this.ctx.lineTo(x + width, y - padding);
         this.ctx.moveTo(x - padding * 2, y + Process.h + padding);
-        this.ctx.lineTo(x + Process.collection.size * Process.w + padding * 2, y + Process.h + padding);
+        this.ctx.lineTo(x + width, y + Process.h + padding);
         this.ctx.closePath();
         this.ctx.stroke();
     }
@@ -222,13 +228,13 @@ export default class Application {
         this.drawQueue("new queue", 50, 80);
         this.drawProcessQueue(this.os.newQueue, 50, 80);
         
-        this.drawQueue("ready queue", 50, 180);
-        this.drawProcessQueue(this.os.readyQueue.data(), 50, 180);
+        this.drawQueue("ready queue", 200, 200);
+        this.drawProcessQueue(this.os.readyQueue.data(), 200, 200);
         
-        this.drawQueue("terminate queue", 50, 280);
-        this.drawProcessQueue(this.os.terminateQueue, 50, 280);
+        this.drawQueue("terminate queue", 700, 350);
+        this.drawProcessQueue(this.os.terminateQueue, 700, 350);
         
-        this.drawCPU(550, 50);
+        this.drawCPU(600, 200);
 
         this.drawGanttChart(this.os.ganttChart, this.os.currentProcess, this.os.timer);
 

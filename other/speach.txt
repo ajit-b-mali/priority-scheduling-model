@@ -1,0 +1,51 @@
+hello, everyone.
+
+I tejashree dumasia with my team members ajit, disha, and Aryan student of modern college of engineering
+
+Today we are presenting our project — Priority Scheduling Simulator — developed using HTML, CSS, and JavaScript.
+
+This project aims to demonstrate how the Priority Scheduling algorithm works in operating systems through a simple and interactive web-based simulator."
+
+
+
+
+
+"Priority Scheduling is an important CPU scheduling technique where each process is assigned a priority. The CPU is always allocated to the process with the highest priority.
+
+Our goal was to create an educational tool that helps users, especially students, to better understand how processes are managed based on their priorities.
+
+Instead of just reading about the concept, users can now interact with the processes, simulate different scenarios, and visualize how scheduling decisions are made."
+
+
+
+First, on the landing page, users can learn about Priority Scheduling through different sections like Overview, Features, Advantages, Disadvantages, Real-World Applications, and Improvements.
+
+
+Second, on the Simulation page, users can actually run a simulation. They can:
+
+-	Add processes by specifying Arrival Time, Burst Time, and Priority.
+-	Play, pause, speed up, slow down, and restart the simulation.
+-	View the Gantt Chart that dynamically updates as the scheduling happens.
+-	See a summary table with calculated values like Completion Time (CT), Turnaround Time (TAT), and Waiting Time (WT)."
+
+
+----
+Lets run a sample simulation on given example
+[[[[run the simulation]]]]
+
+As you can see, once we run the simulation, the processes are executed based on their assigned priority values.
+The process with the highest priority (lowest priority number) is scheduled first.
+On the screen, we can observe the Gantt Chart, which visually represents the order in which processes are executed over time.
+Below the simulation, the summary table shows important details of process and there updated Wait time, Turnaround time
+
+
+Thank you for watching our presentation! We hope you enjoyed this simulation and that it helps you better understand how Priority Scheduling works in operating systems."
+
+
+
+
+
+
+
+
+
