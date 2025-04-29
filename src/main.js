@@ -1,5 +1,4 @@
 import Application from "./Application.js";
-import Process from "./Process.js";
 
 const canvas = /** @type {HTMLCanvasElement} */ (document.getElementById("sim-canvas"));
 
