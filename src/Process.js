@@ -54,9 +54,9 @@ export default class Process {
 
         ctx.fillStyle = "black";
     }
-
+ 
     update(dt) {
-        let speed = 100;
+        let speed = 200;
         for (const p of Process.collection.values()) {
             if (p.x !== p.targetX) {
                 const dx = p.targetX - p.x;

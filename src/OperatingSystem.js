@@ -4,11 +4,9 @@ import CPUScheduler from "./CPUScheduler.js";
 export default class OperatingSystem {
     constructor() {
         this.newQueue = [
-            Process.add(0, 3, 3),
-            Process.add(1, 4, 2),
-            Process.add(2, 6, 4),
-            Process.add(3, 6, 4),
-            Process.add(5, 2, 10),
+            Process.add(0, 1, 1),
+            Process.add(1, 1, 1),
+            Process.add(2, 1, 1),
         ];
         this.readyQueue = new CPUScheduler();
         this.terminateQueue = [];

@@ -11,9 +11,9 @@ export default class CPUScheduler {
             const a = Process.get(first);
             const b = Process.get(second);
             if (a.priority !== b.priority) {
-                return a.priority - b.priority; // lower priority number first
+                return a.priority - b.priority;
             } else {
-                return a.arrivalTime - b.arrivalTime; // if same priority, earlier arrival first
+                return a.arrivalTime - b.arrivalTime;
             }
         });
     }
