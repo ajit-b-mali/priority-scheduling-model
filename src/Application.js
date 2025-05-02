@@ -23,6 +23,21 @@ export default class Application {
         document.getElementById("pause-simulation")?.addEventListener("click", _ => this.state = "pause");
         document.getElementById("fast-simulation")?.addEventListener("click", _ => this.state = "fast");
         document.getElementById("slow-simulation")?.addEventListener("click", _ => this.state = "slow");
+        document.getElementById("reset-simulation")?.addEventListener("click", _ => {
+            this.os.newQueue.length = 0;
+            this.os.terminateQueue.length = 0;
+            this.os.readyQueue.clear();
+            this.os.currentProcess = "";
+            this.os.timer = 0;
+            this.os.ganttChart.length = 0;
+            Process.collection.forEach((value, key) => {
+                const process = Process.get(value);
+                process.completionTime = 0;
+                process.remainingTime = process.burstTime;
+                this.os.newQueue.push(key);
+            });
+            this.state = "pause";
+        });
         document.getElementById("add-process-form")?.addEventListener("submit", this.addProcess.bind(this));
         document.getElementById("clear-processes")?.addEventListener("click", this.clearProcesses.bind(this));
         document.getElementById("close-modal")?.addEventListener("click", _ => {
@@ -47,8 +62,9 @@ export default class Application {
         const bt = formData.get('bt');
         const priority = formData.get('priority');
 
-        const newProcess = Process.add(at, bt, priority);
+        const newProcess = Process.add(Number(at), Number(bt), Number(priority));
         this.os.newQueue.push(newProcess);
+        this.os.totalBurstTime += Process.get(newProcess).burstTime;
     }
 
     drawCPU(x, y) {
@@ -135,64 +151,45 @@ export default class Application {
         }
     }
 
-    drawGanttChart(ganttChart, currentProcess, timer) {
+    drawGanttChart() {
         const canvas = /** @type {HTMLCanvasElement} */ (document.getElementById("gantt-canvas"));
-        canvas.width = this.canvas.clientWidth;
-        canvas.height = 100;
-        canvas.style.border = "1px solid black";
-        if (!canvas) throw new Error("Gantt chart canvas not found");
-        const ctx = canvas.getContext("2d");
-        if (!ctx) throw new Error("Browser doesn't support 2d rendering canvas");
-        ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-    
-        const boxHeight = 50;
-        const startX = 10;
-        const startY = 10;
-        const boxWidth = 40; // Width for fully completed 1 time unit (for finished processes)
+        canvas.width = canvas.clientWidth;
+        canvas.height = canvas.clientHeight;
+        const ctx = /** @type {CanvasRenderingContext2D} */ (canvas.getContext("2d"));
+
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        ctx.strokeStyle = "black";
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.moveTo(0, canvas.height * 0.3);
+        ctx.lineTo(canvas.width, canvas.height * 0.3);
+        ctx.closePath();
+        ctx.stroke();
         
-        let x = startX;
-        
-        // Draw finished processes
-        ganttChart.forEach(pid => {
-            const p = Process.get(pid);
-    
-            const color = p ? p.color : "gray";
-            ctx.fillStyle = color;
-            ctx.fillRect(x, startY, boxWidth, boxHeight);
-    
-            ctx.strokeStyle = "black";
-            ctx.strokeRect(x, startY, boxWidth, boxHeight);
-    
-            ctx.fillStyle = "black";
-            ctx.font = "16px Arial";
+        const inlinePadding = 40;
+        let processUnitWidth = (canvas.width - inlinePadding * 2) / this.os.totalBurstTime;
+        for (let i = 0; i <= this.os.totalBurstTime; i++) {
+            let x = i * processUnitWidth + inlinePadding;
             ctx.textAlign = "center";
             ctx.textBaseline = "middle";
-            ctx.fillText(pid, x + boxWidth / 2, startY + boxHeight / 2);
-    
-            x += boxWidth;
-        });
-    
-        // Draw currently executing process (smooth progress)
-        if (currentProcess !== "") {
-            const p = Process.get(currentProcess);
-            if (p) {
-                const elapsed = p.burstTime - p.remainingTime;
-                const progress = elapsed / p.burstTime; // 0.0 to 1.0
-                const progressWidth = progress * boxWidth;
-    
-                ctx.fillStyle = p.color;
-                ctx.fillRect(x, startY, progressWidth, boxHeight);
-    
-                ctx.strokeStyle = "black";
-                ctx.strokeRect(x, startY, boxWidth, boxHeight);
-    
-                ctx.fillStyle = "black";
-                ctx.font = "16px Arial";
-                ctx.textAlign = "center";
-                ctx.textBaseline = "middle";
-                ctx.fillText(currentProcess, x + boxWidth / 2, startY + boxHeight / 2);
-            }
+            ctx.font = "24px arial bold";
+            ctx.fillText(i.toFixed(), x, canvas.height * 0.8);
         }
+
+        this.os.ganttChart.forEach(({pid, startTime, endTime}) => {
+            if (pid != "") {
+                const process = Process.get(pid);
+                ctx.fillStyle = process.color;
+            } else {
+                ctx.fillStyle = "gray";
+            }
+            let x = startTime * processUnitWidth + inlinePadding;
+            let y = 0;
+            let w = (endTime - startTime) * processUnitWidth;
+            let h = canvas.height * 0.6;
+            ctx.fillRect(x, y, w, h);
+        });
     }
     
     clear() {
@@ -228,15 +225,15 @@ export default class Application {
         this.drawQueue("new queue", 50, 80);
         this.drawProcessQueue(this.os.newQueue, 50, 80);
         
-        this.drawQueue("ready queue", 200, 200);
-        this.drawProcessQueue(this.os.readyQueue.data(), 200, 200);
+        this.drawQueue("ready queue", 50, 200);
+        this.drawProcessQueue(this.os.readyQueue.data(), 50, 200);
         
-        this.drawQueue("terminate queue", 700, 350);
-        this.drawProcessQueue(this.os.terminateQueue, 700, 350);
+        this.drawQueue("terminate queue", 50, 350);
+        this.drawProcessQueue(this.os.terminateQueue, 50, 350);
         
-        this.drawCPU(600, 200);
+        this.drawCPU(400, 200);
 
-        this.drawGanttChart(this.os.ganttChart, this.os.currentProcess, this.os.timer);
+        this.drawGanttChart();
 
         Process.collection.forEach(p => p.draw(this.ctx));
     }

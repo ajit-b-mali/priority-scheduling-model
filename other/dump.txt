@@ -359,4 +359,65 @@ export default class Process {
 //     }
 // }
 
-///////////////////////
+///////////////////////Gantt chart///////////
+
+
+        const canvas = /** @type {HTMLCanvasElement} */ (document.getElementById("gantt-canvas"));
+        canvas.width = this.canvas.clientWidth;
+        canvas.height = 100;
+        canvas.style.border = "1px solid black";
+        if (!canvas) throw new Error("Gantt chart canvas not found");
+        const ctx = canvas.getContext("2d");
+        if (!ctx) throw new Error("Browser doesn't support 2d rendering canvas");
+        ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+    
+        const boxHeight = 50;
+        const startX = 10;
+        const startY = 10;
+        const boxWidth = 40; // Width for fully completed 1 time unit (for finished processes)
+        
+        let x = startX;
+        
+        // Draw finished processes
+        ganttChart.forEach(pid => {
+            const p = Process.get(pid);
+    
+            const color = p ? p.color : "gray";
+            ctx.fillStyle = color;
+            ctx.fillRect(x, startY, boxWidth, boxHeight);
+    
+            ctx.strokeStyle = "black";
+            ctx.strokeRect(x, startY, boxWidth, boxHeight);
+    
+            ctx.fillStyle = "black";
+            ctx.font = "16px Arial";
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            ctx.fillText(pid, x + boxWidth / 2, startY + boxHeight / 2);
+    
+            x += boxWidth;
+        });
+    
+        // Draw currently executing process (smooth progress)
+        if (currentProcess !== "") {
+            const p = Process.get(currentProcess);
+            if (p) {
+                const elapsed = p.burstTime - p.remainingTime;
+                const progress = elapsed / p.burstTime; // 0.0 to 1.0
+                const progressWidth = progress * boxWidth;
+    
+                ctx.fillStyle = p.color;
+                ctx.fillRect(x, startY, progressWidth, boxHeight);
+    
+                ctx.strokeStyle = "black";
+                ctx.strokeRect(x, startY, boxWidth, boxHeight);
+    
+                ctx.fillStyle = "black";
+                ctx.font = "16px Arial";
+                ctx.textAlign = "center";
+                ctx.textBaseline = "middle";
+                ctx.fillText(currentProcess, x + boxWidth / 2, startY + boxHeight / 2);
+            }
+        }
+
+

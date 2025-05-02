@@ -4,17 +4,21 @@ import CPUScheduler from "./CPUScheduler.js";
 export default class OperatingSystem {
     constructor() {
         this.newQueue = [
-            Process.add(0, 1, 1),
-            Process.add(1, 1, 1),
-            Process.add(2, 1, 1),
-        ];
+            Process.add(0, 5, 2), 
+            Process.add(1, 2, 0), 
+            Process.add(2, 4, 1)];
         this.readyQueue = new CPUScheduler();
         this.terminateQueue = [];
+        this.currentProcess = "";
 
         this.ganttChart = [];
-        this.lastTime = 0;
+
         this.timer = 0;
-        this.currentProcess = "";
+        this.totalBurstTime = 0;
+        this.newQueue.forEach(pid => {
+            const process = Process.get(pid);
+            this.totalBurstTime += process.burstTime;
+        });
     }
 
     // Move arrived processes to readyQueue
@@ -51,37 +55,34 @@ export default class OperatingSystem {
 
     // Run current process for 1 unit
     executeProcess(deltaTime) {
-        if (this.currentProcess == "") return;
-
-        const p = Process.get(this.currentProcess);
-        p.remainingTime -= deltaTime;
-        if (p.remainingTime <= 0) {
-            p.completionTime = Math.floor(this.timer);
+        if (this.currentProcess == "") {
+            if (this.ganttChart.length > 0 && this.ganttChart[this.ganttChart.length - 1].pid != "") {
+                this.ganttChart[this.ganttChart.length - 1].endTime = this.timer;
+            }
+            this.ganttChart.push({ pid: "", startTime: Math.floor(this.timer), endTime: this.timer });
+            return;
+        }
+        if (this.ganttChart.length == 0 || this.ganttChart[this.ganttChart.length - 1].pid != this.currentProcess) {
+            this.ganttChart.push({ pid: this.currentProcess, startTime: Math.floor(this.timer), endTime: this.timer });
+        } else {
+            this.ganttChart[this.ganttChart.length - 1].endTime = this.timer;
+        }
+        const currentProcess = Process.get(this.currentProcess);
+        if (currentProcess.remainingTime == undefined) {
+            currentProcess.remainingTime = currentProcess.burstTime;
+        }
+        currentProcess.remainingTime -= deltaTime;
+        if (currentProcess.remainingTime <= 0) {
+            currentProcess.completionTime = Math.floor(this.timer);
             this.terminateQueue.push(this.currentProcess);
             this.currentProcess = "";
-        }
-    }
-
-    handleGanttChart() {
-        if (this.lastTime != Math.floor(this.timer)) {
-            this.lastTime = Math.floor(this.timer);
-
-            if (this.currentProcess == "") {
-                const p = new Process(0, 0, 0);
-                p.color = "gray";
-                this.ganttChart.push(p.id);
-            }
-            else
-                this.ganttChart.push(this.currentProcess);
         }
     }
 
     update(deltaTime) {
         this.timer += deltaTime;
         this.handleNewQueue();
-        this.executeProcess(deltaTime);
         this.dispatcher();
-
-        this.handleGanttChart();
+        this.executeProcess(deltaTime);
     }
 }
