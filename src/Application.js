@@ -19,52 +19,41 @@ export default class Application {
         this.canvas.width = this.canvas.clientWidth;
         this.canvas.height = this.canvas.clientHeight;
 
+        this.state = "pause";
         document.getElementById("play-simulation")?.addEventListener("click", _ => this.state = "play");
         document.getElementById("pause-simulation")?.addEventListener("click", _ => this.state = "pause");
         document.getElementById("fast-simulation")?.addEventListener("click", _ => this.state = "fast");
         document.getElementById("slow-simulation")?.addEventListener("click", _ => this.state = "slow");
-        document.getElementById("reset-simulation")?.addEventListener("click", _ => {
-            this.os.newQueue.length = 0;
-            this.os.terminateQueue.length = 0;
-            this.os.readyQueue.clear();
-            this.os.currentProcess = "";
-            this.os.timer = 0;
-            this.os.ganttChart.length = 0;
-            Process.collection.forEach((value, key) => {
-                const process = Process.get(value);
-                process.completionTime = 0;
-                process.remainingTime = process.burstTime;
-                this.os.newQueue.push(key);
-            });
-            this.state = "pause";
-        });
+        document.getElementById("reset-simulation")?.addEventListener("click", _ => this.os.reset());
         document.getElementById("add-process-form")?.addEventListener("submit", this.addProcess.bind(this));
         document.getElementById("clear-processes")?.addEventListener("click", this.clearProcesses.bind(this));
         document.getElementById("close-modal")?.addEventListener("click", _ => {
             document.getElementById('processModal')?.classList.remove('show');
         });
+        
+        canvas.addEventListener("click", (event) => {
+            console.log(this.os.ganttChart)
+        });
     }
 
     clearProcesses() {
-        this.os.newQueue.length = 0;
-        this.os.readyQueue.clear();
-        this.os.terminateQueue.length = 0;
         Process.collection.clear();
-        this.os.currentProcess = "";
+        this.os.reset();
+        this.state = "pause";
     }
 
     addProcess(event) {
         const addProcessForm = /** @type {HTMLFormElement} */ (document.getElementById('add-process-form'));
         if (!addProcessForm) return;
         event.preventDefault();
+
         const formData = new FormData(addProcessForm);
         const at = formData.get('at');
         const bt = formData.get('bt');
         const priority = formData.get('priority');
+        Process.add(Number(at), Number(bt), Number(priority));
 
-        const newProcess = Process.add(Number(at), Number(bt), Number(priority));
-        this.os.newQueue.push(newProcess);
-        this.os.totalBurstTime += Process.get(newProcess).burstTime;
+        this.os.reset();
     }
 
     drawCPU(x, y) {
@@ -167,13 +156,13 @@ export default class Application {
         ctx.closePath();
         ctx.stroke();
         
-        const inlinePadding = 40;
-        let processUnitWidth = (canvas.width - inlinePadding * 2) / this.os.totalBurstTime;
-        for (let i = 0; i <= this.os.totalBurstTime; i++) {
+        const inlinePadding = 20;
+        let processUnitWidth = (canvas.width - inlinePadding * 2) / this.os.timer;
+        for (let i = 0; i <= this.os.timer; i++) {
             let x = i * processUnitWidth + inlinePadding;
             ctx.textAlign = "center";
             ctx.textBaseline = "middle";
-            ctx.font = "24px arial bold";
+            ctx.font = "16px arial bold";
             ctx.fillText(i.toFixed(), x, canvas.height * 0.8);
         }
 

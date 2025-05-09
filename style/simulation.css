@@ -114,7 +114,7 @@ footer {
     margin: 0;
 }
 
-table {
+/* table {
     margin-inline: auto;
     width: fit-content;
     border-collapse: collapse;
@@ -133,7 +133,43 @@ tr:nth-child(odd) {
 }
 th {
     background: #cccccc;
+} */
+
+table {
+    margin-inline: auto;
+    width: fit-content;
+    border-collapse: collapse;
+    border: 1px solid #e0e0e0;
+    border-radius: 0.5rem;
+    overflow: hidden;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
+
+th, td {
+    padding: 1rem 1.5rem;
+    text-align: center;
+    vertical-align: middle;
+    border-bottom: 1px solid #eee;
+    font-size: 0.95rem;
+    color: #333;
+}
+
+tr:nth-child(even) {
+    background-color: #fafafa;
+}
+
+tr:nth-child(odd) {
+    background-color: #ffffff;
+}
+
+th {
+    background-color: #f0f0f5;
+    font-weight: 600;
+    color: #222;
+    border-bottom: 2px solid #ddd;
+}
+
 
 .modal {
     position: fixed;

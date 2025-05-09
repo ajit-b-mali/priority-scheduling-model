@@ -39,6 +39,6 @@ export default class CPUScheduler {
     }
 
     clear() {
-        this.readyQueue.length = 0;
+        this.readyQueue = [];
     }
 }

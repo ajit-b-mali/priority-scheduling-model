@@ -18,6 +18,12 @@ export default class Process {
         return Process.collection.get(id);
     }
 
+    static resetAll() {
+        for (const p of Process.collection.values()) {
+            p.reset();
+        }
+    }
+
     /**
      * @param {number} at 
      * @param {number} bt 
@@ -37,6 +43,11 @@ export default class Process {
 
         this.targetX = 0;
         this.targetY = 0;
+    }
+
+    reset() {
+        this.remainingTime = this.burstTime;
+        this.completionTime = 0;
     }
 
     /**

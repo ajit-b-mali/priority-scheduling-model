@@ -14,11 +14,17 @@ export default class OperatingSystem {
         this.ganttChart = [];
 
         this.timer = 0;
-        this.totalBurstTime = 0;
-        this.newQueue.forEach(pid => {
-            const process = Process.get(pid);
-            this.totalBurstTime += process.burstTime;
-        });
+    }
+
+    // Reset the OS state
+    reset() {
+        this.newQueue = [...Process.collection.keys()];
+        Process.resetAll();
+        this.readyQueue.clear();
+        this.terminateQueue = [];
+        this.currentProcess = "";
+        this.ganttChart = [];
+        this.timer = 0;
     }
 
     // Move arrived processes to readyQueue
@@ -49,6 +55,7 @@ export default class OperatingSystem {
                 this.readyQueue.push(this.currentProcess);
                 this.currentProcess = this.readyQueue.top();
                 this.readyQueue.pop();
+                this.ganttChart[this.ganttChart.length - 1].endTime = Math.round(this.timer);
             }
         }
     }
@@ -73,8 +80,10 @@ export default class OperatingSystem {
         }
         currentProcess.remainingTime -= deltaTime;
         if (currentProcess.remainingTime <= 0) {
-            currentProcess.completionTime = Math.floor(this.timer);
+            currentProcess.completionTime = Math.round(this.timer);
             this.terminateQueue.push(this.currentProcess);
+            this.dispatcher();
+            this.ganttChart[this.ganttChart.length - 1].endTime = Math.round(this.timer);
             this.currentProcess = "";
         }
     }
