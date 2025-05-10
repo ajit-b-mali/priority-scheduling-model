@@ -31,15 +31,47 @@ export default class Application {
             document.getElementById('processModal')?.classList.remove('show');
         });
         
-        canvas.addEventListener("click", (event) => {
-            console.log(this.os.ganttChart)
+        canvas.addEventListener("mousemove", (event) => {
+            const tooltip = /** @type (HTMLDivElement) */ (document.getElementById("tooltip"));
+            const rect = canvas.getBoundingClientRect();
+            const x = event.clientX - rect.left;
+            const y = event.clientY - rect.top;
+
+            let hoveredProcess = null;
+            for (const p of Process.collection.values()) {
+                if (x >= p.x && x <= p.x + Process.w && y >= p.y && y <= p.y + Process.h) {
+                    this.ctx.canvas.style.cursor = "pointer";
+                    hoveredProcess = p;
+                    break;
+                }
+            }
+            if (hoveredProcess) {
+                tooltip.innerHTML = `
+                    <h3>Pid: ${hoveredProcess.id}</h3>
+                    <h3>Arrival Time: ${hoveredProcess.arrivalTime}</h3>
+                    <h3>Burst Time: ${hoveredProcess.burstTime}</h3>
+                    <h3>Priority: ${hoveredProcess.priority}</h3>
+                    <h3>Remaining Burst Time: ${Math.round(hoveredProcess.remainingTime)}</h3>
+                `;
+                tooltip.style.left = `${event.clientX + 10}px`;
+                tooltip.style.top = `${event.clientY + 10}px`;
+                tooltip.style.display = "block";
+            } else {
+                this.ctx.canvas.style.cursor = "default";
+                tooltip.style.display = "none";
+            }
         });
+        this.newQueuePos = {x: this.canvas.width * 0.1, y: 80};
+        this.readyQueuePos = {x: this.canvas.width * 0.1, y: 220};
+        this.terminateQueuePos = {x: this.canvas.width * 0.1, y: 350};
+        this.cpuPos = {x: this.canvas.width * 0.75, y: 215};
     }
 
     clearProcesses() {
         Process.collection.clear();
         this.os.reset();
         this.state = "pause";
+        Process.colorIndex = 0;
     }
 
     addProcess(event) {
@@ -51,12 +83,34 @@ export default class Application {
         const at = formData.get('at');
         const bt = formData.get('bt');
         const priority = formData.get('priority');
+
+        if (Process.collection.size >= 10) {
+            alert("Process limit reached");
+            return;
+        }
+        if (at === "" || bt === "" || priority === "") {
+            alert("Please fill all fields");
+            return;
+        }
+
+        if (Number(at) < 0) {
+            alert("Invalid arrival time");
+            return;
+        }
+        if (Number(bt) < 1) {
+            alert("invalid burst time");
+            return;
+        }
+        if (Number(priority) < 0 || Number(priority) > 255) {
+            alert("Invalid priority");
+            return;
+        }
         Process.add(Number(at), Number(bt), Number(priority));
 
         this.os.reset();
     }
 
-    drawCPU(x, y) {
+    drawCPU({x, y}) {
         let padding = 10;
         this.ctx.fillStyle = "black";
 
@@ -66,8 +120,8 @@ export default class Application {
 
         this.ctx.strokeRect(x, y, Process.w + padding, Process.h + padding);
         this.ctx.fillStyle = "white";
-        this.ctx.fillRect(x - 1, y + padding / 2, Process.w + padding + 2, Process.h);
-        this.ctx.fillRect(x + padding / 2, y - 1, Process.w, Process.h + padding + 2);
+        this.ctx.clearRect(x - 1, y + padding / 2, Process.w + padding + 2, Process.h);
+        this.ctx.clearRect(x + padding / 2, y - 1, Process.w, Process.h + padding + 2);
 
         this.ctx.fillStyle = "black";
 
@@ -82,10 +136,10 @@ export default class Application {
         let padding = 10;
         this.ctx.textAlign = "center";
         this.ctx.textBaseline = "top";
-        this.ctx.fillText(String(Math.floor(this.os.timer)), x, y + padding);
+        this.ctx.fillText("Current time: " + String(Math.floor(this.os.timer)), x, y + padding);
     }
 
-    drawQueue(title, x, y) {
+    drawQueue(title, {x, y}) {
         const padding = 5;
 
         let width = Process.collection.size * Process.w;
@@ -101,14 +155,14 @@ export default class Application {
 
         this.ctx.beginPath();
         this.ctx.moveTo(x - padding * 2, y - padding);
-        this.ctx.lineTo(x + width, y - padding);
+        this.ctx.lineTo(x + width + padding, y - padding);
         this.ctx.moveTo(x - padding * 2, y + Process.h + padding);
-        this.ctx.lineTo(x + width, y + Process.h + padding);
+        this.ctx.lineTo(x + width + padding, y + Process.h + padding);
         this.ctx.closePath();
         this.ctx.stroke();
     }
 
-    drawProcessQueue(queue, x, y) {
+    drawProcessQueue(queue, {x, y}) {
         let i = 1;
         for (const pid of queue) {
             const p = Process.get(pid);
@@ -158,7 +212,7 @@ export default class Application {
         
         const inlinePadding = 20;
         let processUnitWidth = (canvas.width - inlinePadding * 2) / this.os.timer;
-        for (let i = 0; i <= this.os.timer; i++) {
+        for (let i = 0; i <= this.os.timer && this.os.timer < 60; i++) {
             let x = i * processUnitWidth + inlinePadding;
             ctx.textAlign = "center";
             ctx.textBaseline = "middle";
@@ -186,41 +240,47 @@ export default class Application {
     }
     
     update(deltaTime) {
-        Process.collection.forEach(p => p.update(deltaTime));
         this.updateSummaryTable();
         
         if (this.os.terminateQueue.length == Process.collection.size)
             this.state = "pause";
-
+        
         if (this.state == "fast") {
             this.os.update(deltaTime * 4);
+            Process.collection.forEach(p => p.update(deltaTime * 4));
+            return;
         }
         if (this.state == "slow") {
             this.os.update(deltaTime / 3);
+            Process.collection.forEach(p => p.update(deltaTime / 3));
+            return;
         }
         if (this.state == "pause") {
+            Process.collection.forEach(p => p.update(deltaTime));
             return;
         }
         if (this.state == "play")
         {
+            Process.collection.forEach(p => p.update(deltaTime));
             this.os.update(deltaTime);
+            return;
         }
 
     }
 
     draw() {
         this.drawTime(this.canvas.width / 2, 0);
-        
-        this.drawQueue("new queue", 50, 80);
-        this.drawProcessQueue(this.os.newQueue, 50, 80);
-        
-        this.drawQueue("ready queue", 50, 200);
-        this.drawProcessQueue(this.os.readyQueue.data(), 50, 200);
-        
-        this.drawQueue("terminate queue", 50, 350);
-        this.drawProcessQueue(this.os.terminateQueue, 50, 350);
-        
-        this.drawCPU(400, 200);
+
+        this.drawQueue("new queue", this.newQueuePos);
+        this.drawProcessQueue(this.os.newQueue, this.newQueuePos);
+
+        this.drawQueue("ready queue", this.readyQueuePos);
+        this.drawProcessQueue(this.os.readyQueue.data(), this.readyQueuePos);
+
+        this.drawQueue("terminate queue", this.terminateQueuePos);
+        this.drawProcessQueue(this.os.terminateQueue, this.terminateQueuePos);
+
+        this.drawCPU(this.cpuPos);
 
         this.drawGanttChart();
 

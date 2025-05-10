@@ -48,6 +48,9 @@ export default class OperatingSystem {
         if (this.currentProcess == "") {
             this.currentProcess = this.readyQueue.top();
             this.readyQueue.pop();
+            if (this.ganttChart.length != 0) {
+                this.ganttChart[this.ganttChart.length - 1].endTime = Math.round(this.timer);
+            }
         } else {
             const currentProcess = Process.get(this.currentProcess);
             const nextProcess = Process.get(this.readyQueue.top());
@@ -82,7 +85,6 @@ export default class OperatingSystem {
         if (currentProcess.remainingTime <= 0) {
             currentProcess.completionTime = Math.round(this.timer);
             this.terminateQueue.push(this.currentProcess);
-            this.dispatcher();
             this.ganttChart[this.ganttChart.length - 1].endTime = Math.round(this.timer);
             this.currentProcess = "";
         }

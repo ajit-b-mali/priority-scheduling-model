@@ -1,7 +1,22 @@
+const colorPool = [
+  "#FF0000", // Red
+  "#00FF00", // Green
+  "#0000FF", // Blue
+  "#FFFF00", // Yellow
+  "#FF00FF", // Magenta
+  "#00FFFF", // Cyan
+  "#FFA500", // Orange
+  "#800080", // Purple
+  "#008000", // Dark Green
+  "#cccccc"  // Black (for contrast or fallback)
+];
+// You can add more colors to this array as needed
+
 export default class Process {
     static w = 40;
     static h = 40;
     static collection = new Map();
+    static colorIndex = 0;
 
     static add(at, bt, priority) {
         const p = new Process(at, bt, priority);
@@ -36,7 +51,7 @@ export default class Process {
         this.remainingTime = bt;
         this.completionTime = 0;
 
-        this.color = `hsl(${Math.floor(Math.random() * 256)}, 100%, 50%)`
+        this.color = colorPool[Process.colorIndex++ % colorPool.length];
         this.x = 0;
         this.y = 0;
 
