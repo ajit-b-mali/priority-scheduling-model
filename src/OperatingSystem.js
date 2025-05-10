@@ -14,6 +14,8 @@ export default class OperatingSystem {
         this.ganttChart = [];
 
         this.timer = 0;
+        this.avgWT = 0;
+        this.avgTAT = 0;
     }
 
     // Reset the OS state
@@ -25,6 +27,8 @@ export default class OperatingSystem {
         this.currentProcess = "";
         this.ganttChart = [];
         this.timer = 0;
+        this.avgTAT = 0;
+        this.avgWT = 0;
     }
 
     // Move arrived processes to readyQueue
@@ -33,6 +37,7 @@ export default class OperatingSystem {
             const p = Process.get(pid);
             if (p.arrivalTime <= this.timer) {
                 this.readyQueue.push(pid);
+                p.state = "ready";
                 return false;
             }
             return true;
@@ -48,6 +53,7 @@ export default class OperatingSystem {
         if (this.currentProcess == "") {
             this.currentProcess = this.readyQueue.top();
             this.readyQueue.pop();
+            Process.get(this.currentProcess).state = "running";
             if (this.ganttChart.length != 0) {
                 this.ganttChart[this.ganttChart.length - 1].endTime = Math.round(this.timer);
             }
@@ -56,8 +62,10 @@ export default class OperatingSystem {
             const nextProcess = Process.get(this.readyQueue.top());
             if (nextProcess.priority < currentProcess.priority) {
                 this.readyQueue.push(this.currentProcess);
+                currentProcess.state = "ready";
                 this.currentProcess = this.readyQueue.top();
                 this.readyQueue.pop();
+                nextProcess.state = "running";
                 this.ganttChart[this.ganttChart.length - 1].endTime = Math.round(this.timer);
             }
         }
@@ -83,6 +91,8 @@ export default class OperatingSystem {
         }
         currentProcess.remainingTime -= deltaTime;
         if (currentProcess.remainingTime <= 0) {
+            currentProcess.remainingTime= 0;
+            currentProcess.state = "terminated";
             currentProcess.completionTime = Math.round(this.timer);
             this.terminateQueue.push(this.currentProcess);
             this.ganttChart[this.ganttChart.length - 1].endTime = Math.round(this.timer);

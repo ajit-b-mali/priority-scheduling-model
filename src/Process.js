@@ -50,6 +50,7 @@ export default class Process {
         this.priority = priority;
         this.remainingTime = bt;
         this.completionTime = 0;
+        this.state = "new";
 
         this.color = colorPool[Process.colorIndex++ % colorPool.length];
         this.x = 0;
@@ -62,6 +63,7 @@ export default class Process {
     reset() {
         this.remainingTime = this.burstTime;
         this.completionTime = 0;
+        this.state = "new";
     }
 
     /**
@@ -72,10 +74,15 @@ export default class Process {
         ctx.fillRect(this.x + 1, this.y + 1, Process.w - 2, Process.h - 2);
 
         ctx.fillStyle = "black";
-        ctx.font = "24px courier bold";
+        ctx.font = "18px courier bold";
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
         ctx.fillText(this.id, this.x + Process.w / 2, this.y + Process.h / 2);
+
+        ctx.fillStyle = "white";
+        ctx.fillRect(this.x + 2, this.y + 2, Process.w - 4, 5);
+        ctx.fillStyle = "green";
+        ctx.fillRect(this.x + 2, this.y + 2, (Process.w - 4) * (this.burstTime - this.remainingTime) / this.burstTime, 5);
 
         ctx.fillStyle = "black";
     }

@@ -52,6 +52,7 @@ export default class Application {
                     <h3>Burst Time: ${hoveredProcess.burstTime}</h3>
                     <h3>Priority: ${hoveredProcess.priority}</h3>
                     <h3>Remaining Burst Time: ${Math.round(hoveredProcess.remainingTime)}</h3>
+                    <h3>State: ${hoveredProcess.state}</h3>
                 `;
                 tooltip.style.left = `${event.clientX + 10}px`;
                 tooltip.style.top = `${event.clientY + 10}px`;
@@ -114,6 +115,7 @@ export default class Application {
         let padding = 10;
         this.ctx.fillStyle = "black";
 
+        this.ctx.font = "16px Arial";
         this.ctx.textAlign = "center";
         this.ctx.textBaseline = "bottom";
         this.ctx.fillText("CPU", x + (Process.w + padding) / 2, y);
@@ -132,11 +134,18 @@ export default class Application {
         }
     }
 
-    drawTime(x, y) {
+    drawInfo() {
+        let x = this.canvas.width / 2;
+        let y = 0;
         let padding = 10;
-        this.ctx.textAlign = "center";
+        this.ctx.font = "16px Arial";
+        this.ctx.textAlign = "left";
         this.ctx.textBaseline = "top";
         this.ctx.fillText("Current time: " + String(Math.floor(this.os.timer)), x, y + padding);
+        let s = "Average Wait Time: " + String(this.os.avgWT);
+        this.ctx.fillText(s, this.canvas.width - this.ctx.measureText(s).width - 20, 24);
+        s = "Average Turn Around Time: " + String(this.os.avgTAT); 
+        this.ctx.fillText(s, this.canvas.width - this.ctx.measureText(s).width - 20, 48);
     }
 
     drawQueue(title, {x, y}) {
@@ -242,8 +251,17 @@ export default class Application {
     update(deltaTime) {
         this.updateSummaryTable();
         
-        if (this.os.terminateQueue.length == Process.collection.size)
+        if (this.os.terminateQueue.length == Process.collection.size) {
+            if (this.os.avgWT == 0) {
+                for (const process of Process.collection.values()) {
+                    this.os.avgWT += process.waitTime;
+                    this.os.avgTAT += process.turnaroundTime;
+                }
+                this.os.avgWT = Math.round((this.os.avgWT / Process.collection.size) * 100) / 100;
+                this.os.avgTAT = Math.round((this.os.avgTAT / Process.collection.size) * 100) / 100;
+            }
             this.state = "pause";
+        }
         
         if (this.state == "fast") {
             this.os.update(deltaTime * 4);
@@ -269,7 +287,7 @@ export default class Application {
     }
 
     draw() {
-        this.drawTime(this.canvas.width / 2, 0);
+        this.drawInfo();
 
         this.drawQueue("new queue", this.newQueuePos);
         this.drawProcessQueue(this.os.newQueue, this.newQueuePos);
