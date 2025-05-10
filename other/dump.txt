@@ -421,3 +421,20 @@ export default class Process {
         }
 
 
+////////////////////
+
+        let speed = 200;
+        for (const p of Process.collection.values()) {
+            if (p.x !== p.targetX) {
+                const dx = p.targetX - p.x;
+                p.x += Math.sign(dx) * Math.min(Math.abs(dx), speed * dt);
+            }
+            if (p.y !== p.targetY) {
+                const dy = p.targetY - p.y;
+                p.y += Math.sign(dy) * Math.min(Math.abs(dy), speed * dt);
+            }
+
+            if (Math.abs(p.x - p.targetX) < 1) p.x = p.targetX;
+            if (Math.abs(p.y - p.targetY) < 1) p.y = p.targetY;
+        }
+

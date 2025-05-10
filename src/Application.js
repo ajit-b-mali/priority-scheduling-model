@@ -34,6 +34,74 @@ export default class Application {
         canvas.addEventListener("click", (event) => {
             console.log(this.os.ganttChart)
         });
+
+        this.newQueuePos = {x: 50, y: 80};
+        this.readyQueuePos = {x: 50, y: 200};
+        this.terminateQueuePos = {x: 50, y: 350};
+        this.cpuPos = {x: 400, y: 200};
+    }
+
+    getPath(from, to, pid)
+    {
+        let p0 = {x: 0, y: 0};
+        let p1 = {x: 0, y: 0};
+        let p2 = {x: 0, y: 0};
+        let p3 = {x: 0, y: 0};
+
+        let queueWidth = Process.collection.size * Process.w;
+        if (queueWidth < Process.w * 3)
+            queueWidth = Process.w * 3;
+
+        if (from == "" && to == "new") {
+            let i = this.os.newQueue.indexOf(pid);
+            let endX = this.newQueuePos.x + (Process.collection.size - i) * Process.w - Process.w;
+            p0 = {x: 0, y: 0};
+            p1 = {x: 0, y: 0};
+            p2 = {x: this.newQueuePos.x - 100, y: this.newQueuePos.y};
+            p3 = {x: endX, y: this.newQueuePos.y};
+        } else if (from == "new" && to == "run") {
+            let startX = this.newQueuePos.x + queueWidth - Process.w;
+            let endX = this.cpuPos.x;
+
+            p0 = {x: startX, y: this.newQueuePos.y};
+            p1 = {x: startX + 100, y: this.newQueuePos.y};
+            p2 = {x: endX + 5, y: this.cpuPos.y + 5};
+            p3 = {x: endX + 5, y: this.cpuPos.y + 5};
+        } else if (from == "new" && to == "ready") {
+            let startX = this.newQueuePos.x + queueWidth - Process.w;
+            let i = this.os.readyQueue.data().indexOf(pid);
+            let endX = this.readyQueuePos.x + (Process.collection.size - i) * Process.w - Process.w;
+
+            p0 = {x: startX, y: this.newQueuePos.y};
+            p1 = {x: startX + 100, y: this.newQueuePos.y};
+            p2 = {x: this.readyQueuePos.x - 100, y: this.readyQueuePos.y};
+            p3 = {x: endX, y: this.readyQueuePos.y};
+        } else if (from == "ready" && to == "run") {
+            let startX = this.readyQueuePos.x + queueWidth - Process.w;
+            let endX = this.cpuPos.x;
+
+            p0 = {x: startX, y: this.readyQueuePos.y};
+            p1 = {x: startX + 100, y: this.readyQueuePos.y};
+            p2 = {x: endX + 5, y: this.cpuPos.y + 5};
+            p3 = {x: endX + 5, y: this.cpuPos.y + 5};
+        } else if (from == "run" && to == "ready") {
+            let i = this.os.readyQueue.data().indexOf(pid);
+            let endX = this.readyQueuePos.x + (Process.collection.size - i) * Process.w - Process.w;
+
+            p0 = {x: this.cpuPos.x + 5, y: this.cpuPos.y + 5};
+            p1 = {x: this.cpuPos.x + 5, y: this.cpuPos.y + 5};
+            p2 = {x: this.readyQueuePos.x - 100, y: this.readyQueuePos.y};
+            p3 = {x: endX, y: this.readyQueuePos.y};
+        } else if (from == "run" && to == "terminate") {
+            let i = this.os.terminateQueue.indexOf(pid);
+            let endX = this.terminateQueuePos.x + (Process.collection.size - i) * Process.w - Process.w;
+            p0 = {x: this.cpuPos.x + 5, y: this.cpuPos.y + 5};
+            p1 = {x: this.cpuPos.x + 5, y: this.cpuPos.y + 5};
+            p2 = {x: this.terminateQueuePos.x - 100, y: this.terminateQueuePos.y};
+            p3 = {x: endX, y: this.terminateQueuePos.y};
+        }
+
+        return [p0, p1, p2, p3];
     }
 
     clearProcesses() {
@@ -51,12 +119,19 @@ export default class Application {
         const at = formData.get('at');
         const bt = formData.get('bt');
         const priority = formData.get('priority');
+
+        if(Process.collection.size >= 10) {
+            alert("Process limit reached");
+            return;
+        }
+
         Process.add(Number(at), Number(bt), Number(priority));
 
         this.os.reset();
     }
 
-    drawCPU(x, y) {
+    drawCPU() {
+        const {x, y} = this.cpuPos;
         let padding = 10;
         this.ctx.fillStyle = "black";
 
@@ -71,21 +146,21 @@ export default class Application {
 
         this.ctx.fillStyle = "black";
 
-        if (this.os.currentProcess) {
-            const p = Process.get(this.os.currentProcess);
-            p.targetX = x + padding / 2;
-            p.targetY = y + padding / 2;
-        }
+        // if (this.os.currentProcess) {
+        //     const p = Process.get(this.os.currentProcess);
+        //     p.targetX = x + padding / 2;
+        //     p.targetY = y + padding / 2;
+        // }
     }
 
     drawTime(x, y) {
         let padding = 10;
         this.ctx.textAlign = "center";
         this.ctx.textBaseline = "top";
-        this.ctx.fillText(String(Math.floor(this.os.timer)), x, y + padding);
+        this.ctx.fillText("Current Time: " + String(Math.floor(this.os.timer)), x, y + padding);
     }
 
-    drawQueue(title, x, y) {
+    drawQueue(title, { x, y }) {
         const padding = 5;
 
         let width = Process.collection.size * Process.w;
@@ -106,17 +181,6 @@ export default class Application {
         this.ctx.lineTo(x + width, y + Process.h + padding);
         this.ctx.closePath();
         this.ctx.stroke();
-    }
-
-    drawProcessQueue(queue, x, y) {
-        let i = 1;
-        for (const pid of queue) {
-            const p = Process.get(pid);
-            p.targetX = x + (Process.collection.size - i) * Process.w;
-            p.targetY = y;
-            p.draw(this.ctx);
-            i++;
-        }
     }
 
     updateSummaryTable() {
@@ -188,42 +252,42 @@ export default class Application {
     update(deltaTime) {
         Process.collection.forEach(p => p.update(deltaTime));
         this.updateSummaryTable();
-        
+
+        for (const p of Process.collection.values()) {
+            if (p.nextState != p.state) {
+                const [p0, p1, p2, p3] = this.getPath(p.state, p.nextState, p.id);
+                p.state = p.nextState;
+                p.move(p0, p1, p2, p3);
+            }
+        }
+
         if (this.os.terminateQueue.length == Process.collection.size)
             this.state = "pause";
 
-        if (this.state == "fast") {
-            this.os.update(deltaTime * 4);
-        }
-        if (this.state == "slow") {
-            this.os.update(deltaTime / 3);
-        }
         if (this.state == "pause") {
             return;
-        }
-        if (this.state == "play")
+        } else if (this.state == "fast") {
+            this.os.update(deltaTime * 4);
+        } else if (this.state == "slow") {
+            this.os.update(deltaTime / 3);
+        } else if (this.state == "play")
         {
             this.os.update(deltaTime);
         }
-
     }
 
     draw() {
         this.drawTime(this.canvas.width / 2, 0);
         
-        this.drawQueue("new queue", 50, 80);
-        this.drawProcessQueue(this.os.newQueue, 50, 80);
-        
-        this.drawQueue("ready queue", 50, 200);
-        this.drawProcessQueue(this.os.readyQueue.data(), 50, 200);
-        
-        this.drawQueue("terminate queue", 50, 350);
-        this.drawProcessQueue(this.os.terminateQueue, 50, 350);
-        
-        this.drawCPU(400, 200);
-
+        this.drawQueue("new queue", this.newQueuePos);
+        this.drawQueue("ready queue", this.readyQueuePos);
+        this.drawQueue("terminate queue", this.terminateQueuePos);
+        this.drawCPU();
         this.drawGanttChart();
 
-        Process.collection.forEach(p => p.draw(this.ctx));
+        // Process.collection.forEach(p => p.draw(this.ctx));
+        for (const process of Process.collection.values()) {
+            process.draw(this.ctx);
+        }
     }
 }

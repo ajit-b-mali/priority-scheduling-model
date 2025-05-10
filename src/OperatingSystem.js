@@ -16,7 +16,7 @@ export default class OperatingSystem {
         this.timer = 0;
     }
 
-    // Reset the OS state
+    // Reset the OS State
     reset() {
         this.newQueue = [...Process.collection.keys()];
         Process.resetAll();
@@ -33,6 +33,7 @@ export default class OperatingSystem {
             const p = Process.get(pid);
             if (p.arrivalTime <= this.timer) {
                 this.readyQueue.push(pid);
+                p.nextState = "ready";
                 return false;
             }
             return true;
@@ -48,12 +49,16 @@ export default class OperatingSystem {
         if (this.currentProcess == "") {
             this.currentProcess = this.readyQueue.top();
             this.readyQueue.pop();
+            const p = Process.get(this.currentProcess);
+            p.nextState = "run";
         } else {
             const currentProcess = Process.get(this.currentProcess);
             const nextProcess = Process.get(this.readyQueue.top());
             if (nextProcess.priority < currentProcess.priority) {
                 this.readyQueue.push(this.currentProcess);
+                currentProcess.nextState = "ready";
                 this.currentProcess = this.readyQueue.top();
+                nextProcess.nextState = "run";
                 this.readyQueue.pop();
                 this.ganttChart[this.ganttChart.length - 1].endTime = Math.round(this.timer);
             }
@@ -82,7 +87,8 @@ export default class OperatingSystem {
         if (currentProcess.remainingTime <= 0) {
             currentProcess.completionTime = Math.round(this.timer);
             this.terminateQueue.push(this.currentProcess);
-            this.dispatcher();
+            const p = Process.get(this.currentProcess);
+            p.nextState = "terminate";
             this.ganttChart[this.ganttChart.length - 1].endTime = Math.round(this.timer);
             this.currentProcess = "";
         }
